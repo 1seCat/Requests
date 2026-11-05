@@ -1,2 +1,28 @@
+version: "3.9"
 services:
-  
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Your_password123"
+    ports: ["1433:1433"]
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports: ["5672:5672", "15672:15672"]
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+  api:
+    build: ./src/Requests.API
+    depends_on: [sqlserver, rabbitmq]
+    environment:
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=RequestsDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True"
+      RabbitMq__Host: rabbitmq
+      ASPNETCORE_URLS: "http://+:8080"
+    ports: ["8080:8080"]
+  consumer:
+    build: ./src/Requests.Consumer
+    depends_on: [sqlserver, rabbitmq]
+    environment:
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=RequestsDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True"
+      RabbitMq__Host: rabbitmq
